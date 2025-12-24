@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Tombola Politica - Sera del 23 Dicembre</title>
+    
+    <!-- React & ReactDOM (Versioni stabili) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel (per trasformare JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@400;600;800&family=Comfortaa:wght@700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Afacad Flux', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            background-color: #1e293b;
+        }
+        h1, h2, h3, .brand-font {
+            font-family: 'Comfortaa', cursive;
+        }
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* Animazioni Custom */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+        .animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
+
+        /* Pattern Sfondo Dossier */
+        .dossier-bg {
+            background-color: #fffbeb;
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        /* Transizioni fluide */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Contenitore Root per React -->
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Definisco le variabili React globalmente per sicurezza
+        const { useState, useEffect, useRef } = React;
+
+        // --- ICONE SVG PERSONALIZZATE ---
+        
+        const IconBingoBall = ({ number, color, className }) => (
+            <svg viewBox="0 0 100 100" className={className}>
+                <circle cx="50" cy="50" r="48" fill={color} stroke="#1e293b" strokeWidth="4" />
+                <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="3" />
+                <text x="50" y="65" fontSize="40" fontWeight="bold" fill="white" textAnchor="middle" fontFamily="Comfortaa">{number}</text>
+            </svg>
+        );
+
+        const IconVote = ({ className }) => (
+            <svg viewBox="0 0 200 200" className={className}>
+                <rect x="60" y="100" width="80" height="90" rx="10" fill="#fca5a5" stroke="#1e293b" strokeWidth="4"/>
+                <path d="M100 100 L100 40" stroke="#b91c1c" strokeWidth="12" strokeLinecap="round"/>
+                <circle cx="100" cy="30" r="15" fill="#ef4444" stroke="#1e293b" strokeWidth="3"/>
+                <path d="M70 140 L130 140" stroke="#be123c" strokeWidth="4" opacity="0.5"/>
+            </svg>
+        );
+
+        const IconMoney = ({ className }) => (
+            <svg viewBox="0 0 200 200" className={className}>
+                <rect x="20" y="60" width="160" height="80" rx="10" fill="#86efac" stroke="#14532d" strokeWidth="4"/>
+                <circle cx="100" cy="100" r="25" fill="#22c55e" stroke="#14532d" strokeWidth="3"/>
+                <text x="100" y="110" fontSize="30" fontWeight="bold" fill="#052e16" textAnchor="middle">$</text>
+                <path d="M40 60 L40 140 M160 60 L160 140" stroke="#14532d" strokeWidth="2" strokeDasharray="4,4"/>
+            </svg>
+        );
+
+        const IconScarcity = ({ className }) => (
+            <svg viewBox="0 0 200 200" className={className}>
+                <path d="M40 160 L160 160 L160 60 L40 60 Z" fill="#fcd34d" stroke="#78350f" strokeWidth="4"/>
+                <path d="M40 60 L100 20 L160 60" fill="#fbbf24" stroke="#78350f" strokeWidth="4"/>
+                <text x="100" y="125" fontSize="60" fontWeight="bold" fill="#92400e" textAnchor="middle">0</text>
+                <text x="100" y="150" fontSize="14" fontWeight="bold" fill="#92400e" textAnchor="middle">RIMASTE</text>
+            </svg>
+        );
+
+        const IconCartel = ({ className }) => (
+            <svg viewBox="0 0 200 200" className={className}>
+                <circle cx="100" cy="100" r="90" fill="#93c5fd" opacity="0.5" />
+                <circle cx="60" cy="80" r="30" fill="#2563eb" stroke="#1e293b" strokeWidth="3"/>
+                <circle cx="140" cy="80" r="30" fill="#2563eb" stroke="#1e293b" strokeWidth="3"/>
+                <circle cx="100" cy="140" r="30" fill="#2563eb" stroke="#1e293b" strokeWidth="3"/>
+                <path d="M60 80 L140 80 L100 140 Z" fill="none" stroke="#1e3a8a" strokeWidth="5" strokeDasharray="8,4"/>
+            </svg>
+        );
+
+        // --- COMPONENTE SEZIONE STORIA ---
+        
+        const StorySection = ({ id, bgColor, textColor, time, title, story, analysisTitle, analysisContent, icon: Icon, source, reverse }) => {
+            const [isVisible, setIsVisible] = useState(false);
+            const [isDossierOpen, setDossierOpen] = useState(false);
+            const sectionRef = useRef(null);
+
+            useEffect(() => {
+                const observer = new IntersectionObserver(
+                    ([entry]) => {
+                        if (entry.isIntersecting) {
+                            setIsVisible(true);
+                        }
+                    },
+                    { threshold: 0.15 } 
+                );
+                if (sectionRef.current) observer.observe(sectionRef.current);
+                return () => observer.disconnect();
+            }, []);
+
+            return (
+                <section 
+                    ref={sectionRef} 
+                    className={`min-h-screen flex items-center justify-center py-20 px-6 relative transition-colors duration-700 ${bgColor}`}
+                >
+                    <div className={`max-w-7xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${reverse ? 'lg:grid-flow-dense' : ''}`}>
+                        
+                        {/* Lato Visuale */}
+                        <div className={`flex flex-col items-center justify-center ${reverse ? 'lg:col-start-2' : ''} transition-all duration-1000 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
+                            <div className="relative w-72 h-72 md:w-96 md:h-96">
+                                <div className="absolute inset-0 bg-white opacity-20 rounded-full blur-3xl animate-pulse-slow"></div>
+                                <Icon className="w-full h-full drop-shadow-2xl animate-float relative z-10" />
+                                
+                                {/* Badge Orario */}
+                                <div className="absolute -top-6 -right-6 bg-slate-900 text-green-400 font-mono text-xl px-6 py-2 rounded-xl border-4 border-slate-800 shadow-xl z-20 transform rotate-3">
+                                    {time}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Lato Narrativo */}
+                        <div className={`transition-all duration-1000 delay-300 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}>
+                            <h2 className={`text-4xl md:text-6xl font-black mb-6 leading-tight brand-font ${textColor}`}>
+                                {title}
+                            </h2>
+                            
+                            <div className="bg-white/80 backdrop-blur-md p-8 rounded-3xl shadow-lg border border-slate-200 mb-8">
+                                <p className="text-xl text-slate-800 leading-relaxed font-medium mb-6">
+                                    {story}
+                                </p>
+                            </div>
+
+                            {/* Dossier Toggle */}
+                            <div className="relative z-30">
+                                <button 
+                                    onClick={() => setDossierOpen(!isDossierOpen)}
+                                    className="w-full bg-slate-900 hover:bg-slate-800 text-white p-5 rounded-xl flex items-center justify-between transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 group"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <span className="text-2xl group-hover:scale-110 transition-transform">
+                                            {isDossierOpen ? '📂' : '🔒'}
+                                        </span>
+                                        <div className="text-left">
+                                            <div className="text-xs text-slate-400 font-mono uppercase tracking-widest">Dossier Confidenziale</div>
+                                            <div className="font-bold text-lg">{analysisTitle}</div>
+                                        </div>
+                                    </div>
+                                    <i className={`fa-solid fa-chevron-down transition-transform duration-300 ${isDossierOpen ? 'rotate-180' : ''}`}></i>
+                                </button>
+
+                                {/* Contenuto Dossier */}
+                                <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isDossierOpen ? 'max-h-[1000px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
+                                    <div className="dossier-bg border-l-4 border-slate-900 rounded-r-xl p-8 shadow-inner relative">
+                                        <div className="absolute top-2 right-2 opacity-10">
+                                            <i className="fa-solid fa-stamp text-6xl text-red-800 transform -rotate-12"></i>
+                                        </div>
+                                        
+                                        <h4 className="font-mono font-bold text-slate-900 mb-4 pb-2 border-b border-slate-300">
+                                            ANALISI ECONOMICO-ISTITUZIONALE
+                                        </h4>
+                                        <div className="prose prose-slate max-w-none text-slate-700 font-serif text-lg leading-relaxed">
+                                            {analysisContent}
+                                        </div>
+                                        <div className="mt-6 pt-4 border-t border-slate-300 text-xs font-mono text-slate-500 flex items-center gap-2">
+                                            <i className="fa-solid fa-quote-left text-slate-400"></i>
+                                            {source}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+            );
+        };
+
+        // --- APPLICAZIONE PRINCIPALE ---
+
+        const App = () => {
+            return (
+                <div className="bg-slate-900">
+                    
+                    {/* HERO HEADER */}
+                    <header className="min-h-screen flex flex-col items-center justify-center text-center px-4 relative overflow-hidden bg-rose-50">
+                        {/* Sfondo Animato */}
+                        <div className="absolute inset-0 pointer-events-none">
+                            <IconBingoBall number="23" color="#ef4444" className="absolute top-10 left-10 w-32 md:w-48 animate-float opacity-40" />
+                            <IconBingoBall number="12" color="#3b82f6" className="absolute bottom-20 right-10 w-40 md:w-64 animate-float opacity-40" />
+                            <IconBingoBall number="90" color="#10b981" className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] opacity-5" />
+                        </div>
+
+                        <div className="z-10 max-w-5xl animate-float">
+                            <span className="inline-block bg-slate-900 text-rose-300 font-mono px-4 py-2 rounded mb-6 transform -rotate-2 shadow-lg font-bold border border-rose-500">
+                                Sera del 23 dicembre 2025
+                            </span>
+                            <h1 className="text-5xl md:text-8xl font-black text-slate-900 mb-8 tracking-tighter drop-shadow-sm leading-none">
+                                CI SEI? <br/>FACCIAMO UNA <span className="text-rose-600">TOMBOLATA</span> TRA AMICI
+                            </h1>
+                            <p className="text-xl md:text-3xl text-slate-600 font-medium max-w-3xl mx-auto leading-relaxed mb-12">
+                                L'invito arriva da <strong>Francesco</strong> che vuole trascorrere una serata in amicizia per festeggiare il suo compleanno e augurare buone feste a tutti. Non sa quello che sta per succedere.
+                            </p>
+                        </div>
+                        
+                        <div className="absolute bottom-10 animate-bounce">
+                            <i className="fa-solid fa-arrow-down text-4xl text-slate-900"></i>
+                        </div>
+                    </header>
+
+                    {/* FASE 1: 22:00 - L'UTOPIA DI SALVATORE */}
+                    <StorySection 
+                        time="22:00"
+                        bgColor="bg-rose-100"
+                        textColor="text-rose-900"
+                        title="La Proposta di Salvatore"
+                        story={<span>
+                            Siamo tutti seduti. <strong>Flavio</strong> sta raccontando del dottorato mentre <strong>Chiara</strong> e <strong>Mario</strong>, appena arrivati, salutano. <strong>Michelangelo</strong> controlla che sia tutto in ordine, <strong>Claudia</strong> chiede a <strong>Daniele</strong> come va, mentre <strong>Andrea</strong> e <strong>Angelo</strong> guardano la tv che trasmette Natale in casa Cupiello senza audio.
+                            <br/><br/>
+                            L'atmosfera è conviviale e leggera fin quando <strong>Salvatore</strong> alza la mano:
+                            <br/><br/>
+                            <em>«Ragazzi, fermi tutti. Propongo una regola: massimo UNA cartella a testa. Così le probabilità di vincita sono identiche per tutti. È l'unico modo equo di giocare.»</em>
+                            <br/><br/>
+                            Gelo nella stanza.
+                        </span>}
+                        icon={IconVote}
+                        analysisTitle="Giustizia come Equità (Rawls)"
+                        analysisContent={<span>
+                            Salvatore sta applicando la teoria della <strong>Giustizia come Equità</strong> di John Rawls. La sua proposta cerca di neutralizzare i vantaggi arbitrari (la ricchezza personale) per garantire un'uguaglianza sostanziale.
+                            <br/><br/>
+                            L'idea è che un sistema giusto debba garantire pari opportunità di partenza ("Level Playing Field"), impedendo che il potere economico si traduca automaticamente in vittoria.
+                        </span>}
+                        source="Amartya Sen - Capability Approach / Liberal Egalitarianism"
+                        reverse={false}
+                    />
+
+                    {/* FASE 2: 22:15 - IL VETO DI ANGELO */}
+                    <StorySection 
+                        time="22:15"
+                        bgColor="bg-emerald-100"
+                        textColor="text-emerald-900"
+                        title="La Rivolta di Angelo"
+                        story={<span>
+                            <strong>Angelo</strong> ride e scuote la testa:
+                            <br/><br/>
+                            <em>«Ma non esiste! Se io voglio spendere i miei soldi per avere più chance, è una mia libertà fondamentale. Perché dovresti impedirmi di rischiare?»</em>
+                            <br/><br/>
+                            Si passa ai voti. La proposta di Salvatore viene bocciata per un voto. Vince il "compra quanto vuoi".
+                        </span>}
+                        icon={IconMoney}
+                        analysisTitle="Laissez-Faire & Deflazione (1880-1896)"
+                        analysisContent={<span>
+                            Angelo incarna il <strong>Libertarismo</strong> (Nozick): la giustizia deriva dagli scambi volontari, non dall'uguaglianza finale.
+                            <br/><br/>
+                            Questo riflette l'era del <em>Laissez-faire</em> classico. Tuttavia, in questo periodo (Grande Deflazione 1873-1896), la concorrenza perfetta divenne "distruttiva". I prezzi calavano costantemente a causa del Gold Standard, erodendo i profitti e portando le imprese al collasso.
+                        </span>}
+                        source="Deflazione e Gold Standard"
+                        reverse={true}
+                    />
+
+                    {/* FASE 3: 22:45 - IL CAOS DI MATTEO */}
+                    <StorySection 
+                        time="22:45"
+                        bgColor="bg-violet-100"
+                        textColor="text-violet-900"
+                        title="Il Caos di Matteo"
+                        story={<span>
+                            Suona il citofono. È <strong>Matteo</strong>, in ritardo. Il suo arrivo rompe gli equilibri. Bisogna rivotare.
+                            <br/><br/>
+                            Con il voto di Matteo e di un "franco tiratore" che resterà anonimo passa la mozione del "serve un limite", ma scatta il litigio sul numero. <em>«Facciamo 1!»</em> si dice, <em>«No, 2!»</em> viene urlato, <em>«2 è già troppo!»</em> la controrisposta.
+                            <br/><br/>
+                            Risultato? Stallo totale. Non si decide nulla.
+                        </span>}
+                        icon={() => <div className="text-9xl font-black text-violet-400 animate-pulse text-center w-full">?</div>}
+                        analysisTitle="Fallimento di Coordinamento & Arrow"
+                        analysisContent={<span>
+                            Questa fase illustra il <strong>Teorema dell'Impossibilità di Kenneth Arrow</strong>: non esiste un sistema di voto perfetto per aggregare le preferenze individuali senza paradossi.
+                            <br/><br/>
+                            È un classico "Fallimento di Coordinamento": il gruppo (il mercato) non riesce ad autoregolarsi efficacemente attraverso meccanismi democratici diretti, lasciando spazio al caos.
+                        </span>}
+                        source="Kenneth Arrow - Teorema dell'Impossibilità"
+                        reverse={false}
+                    />
+
+                    {/* FASE 4: 23:15 - LA SCARSITA' */}
+                    <StorySection 
+                        time="23:15"
+                        bgColor="bg-amber-100"
+                        textColor="text-amber-900"
+                        title="La Dittatura della Scarsità"
+                        story={<span>
+                            Si comprano le cartelle e... <strong>panico</strong>.
+                            Il banco è quasi vuoto. Non ci sono abbastanza cartelle fisiche per tutti.
+                            <br/><br/>
+                            Se <strong>Angelo</strong> ne compra 10, <strong>Daniele</strong> e <strong>Claudia</strong> restano a guardare. L'ideologia sparisce di fronte alla realtà materiale. Siamo costretti a imporre dall'alto:
+                            <br/>
+                            <strong>«STOP. Massimo 2 cartelle a testa. Per tutti. Ora.»</strong>
+                        </span>}
+                        icon={IconScarcity}
+                        analysisTitle="Keynes & Economia di Guerra"
+                        analysisContent={<span>
+                            La scarsità impone ciò che la politica non riusciva a decidere. Questo è il momento <strong>Keynesiano</strong>: quando il mercato fallisce, l'autorità pubblica deve intervenire per allocare le risorse.
+                            <br/><br/>
+                            Di fronte alla necessità (come durante il War Industries Board), il meccanismo dei prezzi fu sospeso e sostituito dalla pianificazione centralizzata ("Capitalismo Organizzato") per garantire la sopravvivenza del sistema.
+                        </span>}
+                        source="Keynes - Ruolo dello Stato / War Industries Board"
+                        reverse={true}
+                    />
+
+                    {/* FASE 5: 23:50 - IL CARTELLO */}
+                    <StorySection 
+                        time="23:50"
+                        bgColor="bg-blue-100"
+                        textColor="text-blue-900"
+                        title="Es tu culpa"
+                        story={<span>
+                            Pensavano di aver risolto con il limite di 2 cartelle, ma è solo l'inizio. <strong>Salvatore</strong>, <strong>Matteo</strong> e <strong>Andrea</strong> si scambiano un'occhiata d'intesa: giocheranno in società.
+                            <br/><br/>
+                            Comprano in blocco e decidono di dividersi qualsiasi vincita. Mentre gli altri giocano da soli con 2 cartelle, loro giocano come un mostro a 3 teste e 6 cartelle.
+                        </span>}
+                        icon={IconCartel}
+                        analysisTitle="Trusts & Holding Companies"
+                        analysisContent={<span>
+                            Hanno formato un <strong>Cartello</strong> (o Trust). Hanno smesso di competere tra loro per cooperare contro gli altri.
+                            <br/><br/>
+                            Storicamente, questo fu legittimato dal <strong>New Jersey General Corporation Act (1889)</strong>, che permise alle aziende di possedere altre aziende (Holding Companies). Hanno creato un "Socialismo interno" per massimizzare il dominio esterno.
+                        </span>}
+                        source="New Jersey General Corporation Act (1889) - Holding Company"
+                        reverse={false}
+                    />
+
+                    {/* CONCLUSIONE: 00:10 */}
+                    <section className="bg-slate-900 min-h-screen flex items-center justify-center py-20 px-6 text-center border-t-8 border-rose-500">
+                        <div className="max-w-4xl">
+                            <h2 className="text-4xl md:text-7xl font-black mb-8 brand-font text-white drop-shadow-lg">
+                                IL CARTELLO VINCE QUASI TUTTO.
+                            </h2>
+                            <p className="text-xl md:text-2xl text-slate-300 leading-relaxed mb-12 font-light">
+                                Il "Cartello dei Tre" ha fatto ambo, terna, quaterna e cinquina. 
+                                Hanno ripulito il tavolo. Solo <strong>Angelo</strong> riesce a strappare loro la tombola.
+                                <br/><br/>
+                                <strong className="text-white">La lezione?</strong><br/>
+                                I miei amici si dichiarano di sinistra ma sono dei neoliberisti assetati di vittoria e sopraffazione del prossimo.
+                            </p>
+
+                            {/* Cards Finali */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                                <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-emerald-500 transition hover:-translate-y-2 duration-300">
+                                    <h3 className="text-emerald-400 font-bold text-xl mb-3">Angelo</h3>
+                                    <p className="text-slate-400 text-sm">Vince la tombola ed è felice, nonostante il cartello abbia preso tutto il resto. Assetato dalla voglia di vincere non riconosce che una tombolata è diventata monopoli. Il giorno dopo invia meme di rivendicazione.</p>
+                                </div>
+                                <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-rose-500 transition hover:-translate-y-2 duration-300">
+                                    <h3 className="text-rose-400 font-bold text-xl mb-3">Salvatore</h3>
+                                    <p className="text-slate-400 text-sm">Da idealista a monopolista: come un sessantottino qualunque predica bene e razzola male. Sostiene ideali egualitari per poi raggirare le regole del sistema. Si difenderà con un "l'avete voluto voi, questo è quello che fa il mercato" tipico della peggio sinistra liberal.</p>
+                                </div>
+                                <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 hover:border-indigo-500 transition hover:-translate-y-2 duration-300">
+                                    <h3 className="text-indigo-400 font-bold text-xl mb-3">Il Gruppo</h3>
+                                    <p className="text-slate-400 text-sm">Doveva essere una serata tranquilla ma è evidentemente degenerata: Flavio guarda Dragon Ball mentre Michelangelo, non si sa perché, lavora al posto suo. Francesco si chiede cos'è andato storto, mentre Sabrina, Claudia, Mario, Chiara e Daniele provano a far finta che sia tutto normale.</p>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-16 text-slate-500 font-mono text-sm">
+                                Il peggio deve ancora arrivare. Di lì a poco si inizierà a giocare a L'asso che fugge.
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
